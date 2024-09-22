@@ -48,7 +48,7 @@ class Program
 
         { 
             int lastDigit = percentage % 10; // Get the last digit
-            if (lastDigit>= 7)
+            if (lastDigit >= 7)
             {
                 sign ="+";
             }
