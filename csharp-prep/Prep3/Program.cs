@@ -5,6 +5,7 @@ class Program
     static void Main()
     {
         Console.WriteLine("Hello Prep3 World!");
+        Console.WriteLine("Guess the Number Assignment.");
         Console.WriteLine("Stretch challenge included");
         Console.WriteLine();
     

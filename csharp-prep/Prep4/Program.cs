@@ -7,6 +7,7 @@ class Program
     {
         Console.WriteLine("Hello Prep4 World!");
         Console.WriteLine("List Assignment");
+        Console.WriteLine("Stretch Challenge included.");
         Console.WriteLine();
 
         List<int> numbers = new List<int>();
