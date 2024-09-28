@@ -1,0 +1,23 @@
+[
+  {
+    "Prompt": "What was the best part of my day?",
+    "Response": "Waking with my greeting dog",
+    "Date": "2024-09-29 04:38:47",
+    "Mood": "Happy",
+    "Reminder": "Attend institute"
+  },
+  {
+    "Prompt": "What was the best part of my day?",
+    "Response": "Drinking milk",
+    "Date": "2024-09-29 04:39:35",
+    "Mood": "happy",
+    "Reminder": "do exercise"
+  },
+  {
+    "Prompt": "Who was the most interesting person I interacted with today?",
+    "Response": "an old grandpa",
+    "Date": "2024-09-29 04:40:10",
+    "Mood": "emotional",
+    "Reminder": "read the scriptures"
+  }
+]
