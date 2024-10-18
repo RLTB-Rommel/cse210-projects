@@ -87,9 +87,6 @@ namespace ScriptureMemorization
         {
             if (Words.All(w => w.IsHidden)) return;
 
-            int visibleCount = Words.Count(w => !w.IsHidden);
-            if (visibleCount == 0) return;
-
             int index;
             do
             {
@@ -101,7 +98,7 @@ namespace ScriptureMemorization
 
         public override string ToString()
         {
-            return $"{Reference.Reference}\n" + string.Join(" ", Words);
+            return $"{Reference.Reference}: " + string.Join(" ", Words);
         }
 
         public bool AllWordsHidden()
@@ -120,7 +117,6 @@ namespace ScriptureMemorization
             string filePath = "scriptures.txt";
             LoadScripturesFromFile(filePath);
 
-            // Check if there are scriptures loaded
             if (_scriptures.Count == 0)
             {
                 Console.WriteLine("No scriptures found. Exiting the program.");
@@ -132,15 +128,15 @@ namespace ScriptureMemorization
 
             while (!quit)
             {
-                if (_scriptures.Count == 0) // Check if all scriptures have been used
+                if (_scriptures.Count == 0)
                 {
-                    Console.WriteLine("All scriptures have been processed. Exiting the program.");
+                    Console.WriteLine("All scriptures in the database have been viewed. Exiting the program.");
                     break; // Exit the main loop
                 }
 
                 var scripture = GetRandomScripture(random);
-                _usedScriptures.Add(scripture); // Add to used scriptures
-                _scriptures.Remove(scripture); // Remove from available scriptures
+                _usedScriptures.Add(scripture);
+                _scriptures.Remove(scripture);
 
                 bool scriptureComplete = false;
 
@@ -161,21 +157,17 @@ namespace ScriptureMemorization
                     }
                     else
                     {
-                        scripture.HideRandomWord(random); // Hide a word
-                        wordsLeft = scripture.Words.Count(w => !w.IsHidden); // Update wordsLeft after hiding
+                        scripture.HideRandomWord(random);
+                        wordsLeft = scripture.Words.Count(w => !w.IsHidden);
 
-                        // Debugging: Show the current state of words
-                        Console.WriteLine("Current words state:");
-                        foreach (var word in scripture.Words)
-                        {
-                            Console.WriteLine(word.ToString()); // This will show hidden or visible words
-                        }
+                        Console.WriteLine("\nPress Enter to continue...");
+                        Console.ReadLine();
 
-                        if (wordsLeft == 0) // Check if no words are left
+                        if (wordsLeft == 0)
                         {
-                            Console.Clear(); // Clear the console before showing the congratulations message
-                            Console.WriteLine("\nCongratulations! All words are hidden!"); // Display message
-                            scriptureComplete = true; // Mark scripture as complete
+                            Console.Clear();
+                            Console.WriteLine("\nCongratulations! All words are hidden!");
+                            scriptureComplete = true;
                         }
                     }
                 }
@@ -188,12 +180,12 @@ namespace ScriptureMemorization
                         string response = Console.ReadLine();
                         if (response?.ToLower() == "yes")
                         {
-                            break; // Get a new scripture
+                            break;
                         }
                         else if (response?.ToLower() == "no")
                         {
-                            quit = true; // Exit the main loop
-                            break; // Exit the confirmation loop
+                            quit = true;
+                            break;
                         }
                         else
                         {
@@ -206,16 +198,11 @@ namespace ScriptureMemorization
 
         private static void LoadScripturesFromFile(string filePath)
         {
-            Console.WriteLine($"Checking for file: {filePath}");
-            Console.WriteLine($"Current Directory: {Directory.GetCurrentDirectory()}");
-
             if (File.Exists(filePath))
             {
-                Console.WriteLine("File found. Reading lines...");
                 try
                 {
                     var lines = File.ReadAllLines(filePath);
-                    Console.WriteLine($"Number of lines read: {lines.Length}");
 
                     foreach (var line in lines)
                     {
