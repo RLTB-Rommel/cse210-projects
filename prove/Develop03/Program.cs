@@ -1,35 +1,54 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace ScriptureMemorization
 {
-    //class represent a scripture reference
     public class ScriptureReference
     {
-        public string Reference {get;private set;}
+        private string _reference;
+
+        public string Reference
+        {
+            get => _reference;
+            private set => _reference = value;
+        }
+
         public ScriptureReference(string reference)
         {
             Reference = reference;
         }
+
         public ScriptureReference(string book, int chapter, int verse)
-            {
-                Reference = $"{book}{chapter}:{verse}";
-            }
-        public ScriptureReference (string book, int chapter, int startverse, int endverse)
-            {
-                Reference = $"{book}{chapter}:{startverse}-{endverse}";
-            }
-    }   
+        {
+            Reference = $"{book} {chapter}:{verse}";
+        }
 
-    //class represent a word in the scripture
+        public ScriptureReference(string book, int chapter, int startVerse, int endVerse)
+        {
+            Reference = $"{book} {chapter}:{startVerse}-{endVerse}";
+        }
+    }
 
-    public class word
+    public class Word
     {
-        
-        public string Text{get; private set;}
-        public bool IsHidden{get; set;}
-        public word (string text)
+        private string _text;
+        private bool _isHidden;
+
+        public string Text
+        {
+            get => _text;
+            private set => _text = value;
+        }
+
+        public bool IsHidden
+        {
+            get => _isHidden;
+            set => _isHidden = value;
+        }
+
+        public Word(string text)
         {
             Text = text;
             IsHidden = false;
@@ -37,38 +56,46 @@ namespace ScriptureMemorization
 
         public override string ToString()
         {
-            return IsHidden ? "_____" :Text;//display hidden word as "_______"
+            return IsHidden ? "_____" : Text;
         }
-        
     }
-
-    //class to represent a scripture
 
     public class Scripture
     {
-        public ScriptureReference Reference {get; private set;}
-        public List<word> Words{get; private set;}
+        private ScriptureReference _reference;
+        private List<Word> _words;
 
-        public Scripture (ScriptureReference reference, string text)
+        public ScriptureReference Reference
         {
-            Reference = reference;
-            Words = text.Split (' ').Select (w=> new word(w)).ToList();
+            get => _reference;
+            private set => _reference = value;
         }
 
-        public void HideRandomWord (Random random)
+        public List<Word> Words
         {
-            
-            //check if all words are already hidden
+            get => _words;
+            private set => _words = value;
+        }
 
-            if (Words.All(w=>w.IsHidden))
-                return; //exit if all words are hidden
+        public Scripture(ScriptureReference reference, string text)
+        {
+            Reference = reference;
+            Words = text.Split(' ').Select(w => new Word(w)).ToList();
+        }
+
+        public void HideRandomWord(Random random)
+        {
+            if (Words.All(w => w.IsHidden)) return;
+
+            int visibleCount = Words.Count(w => !w.IsHidden);
+            if (visibleCount == 0) return;
+
             int index;
             do
-            {       
+            {
                 index = random.Next(Words.Count);
+            } while (Words[index].IsHidden);
 
-            }
-            while (Words[index].IsHidden); // ensure hiding only visible words
             Words[index].IsHidden = true;
         }
 
@@ -81,89 +108,144 @@ namespace ScriptureMemorization
         {
             return Words.All(w => w.IsHidden);
         }
-
     }
-
-    //Main program class
 
     class Program
     {
-        private static List<Scripture> scriptures = new List<Scripture>
-        {
-            new Scripture(new ScriptureReference("Romans 8:38-39"),
-            "For I am convinced that neither death nor life, neither angels nor demons, " +
-            "neither the present nor the future, nor any powers, neither height nor depth, " +
-            "nor anything else in all creation, will be able to separate us from the love of God that is in Christ Jesus our Lord."),
-            
-            new Scripture(new ScriptureReference("Luke 24:38-39"),
-            "And He said unto them, why are ye troubled? and why do thoughts arise in your hearts? " +
-            "Behold my hands and my feet, that it is I myself: handle me, and see; for a spirit hath not flesh and bones, as ye see me have."),
-                        
-            new Scripture(new ScriptureReference("John 10:16"),
-            "And other sheep I have, which are not of this fold: them also I must bring, " +
-            "and they shall hear my voice; and there shall be one fold, and one shepherd."),
-            
-            new Scripture(new ScriptureReference("Matthew 22:37-40"),
-            "Jesus replied: “ ‘Love the Lord your God with all your heart and with all your soul and with all your mind.’ " +
-            "This is the first and greatest commandment. And the second is like it: ‘Love your neighbor as yourself.’ " +
-            "All the Law and the Prophets hang on these two commandments.”"),
-            
-            new Scripture(new ScriptureReference("John 16:33"),
-            "I have told you all this so that you may have peace in me. Here on earth you will have many trials and sorrows. " +
-            "But take heart, because I have overcome the world.")
-            
-        };
+        private static List<Scripture> _scriptures = new List<Scripture>();
+        private static List<Scripture> _usedScriptures = new List<Scripture>();
 
         static void Main(string[] args)
         {
+            string filePath = "scriptures.txt";
+            LoadScripturesFromFile(filePath);
+
+            // Check if there are scriptures loaded
+            if (_scriptures.Count == 0)
+            {
+                Console.WriteLine("No scriptures found. Exiting the program.");
+                return; // Exit if no scriptures are available
+            }
+
             Random random = new Random();
             bool quit = false;
 
             while (!quit)
             {
-                Console.Clear();
+                if (_scriptures.Count == 0) // Check if all scriptures have been used
+                {
+                    Console.WriteLine("All scriptures have been processed. Exiting the program.");
+                    break; // Exit the main loop
+                }
+
                 var scripture = GetRandomScripture(random);
+                _usedScriptures.Add(scripture); // Add to used scriptures
+                _scriptures.Remove(scripture); // Remove from available scriptures
+
                 bool scriptureComplete = false;
 
-                while(!scriptureComplete)
-
+                while (!scriptureComplete)
                 {
                     Console.Clear();
-                    Console.WriteLine(scripture); //display the current scripture
+                    Console.WriteLine(scripture);
 
-                        Console.WriteLine("\nPress Enter to hide a word or type 'quit' to exit.");
-                        string input = Console.ReadLine();
-                        if (input?.ToLower()=="quit")
+                    int wordsLeft = scripture.Words.Count(w => !w.IsHidden);
+                    Console.WriteLine($"\nWords left to hide: {wordsLeft}");
 
+                    Console.WriteLine("\nPress Enter to hide a word or type 'quit' to exit.");
+                    string input = Console.ReadLine();
+                    if (input?.ToLower() == "quit")
+                    {
+                        quit = true;
+                        break;
+                    }
+                    else
+                    {
+                        scripture.HideRandomWord(random); // Hide a word
+                        wordsLeft = scripture.Words.Count(w => !w.IsHidden); // Update wordsLeft after hiding
+
+                        // Debugging: Show the current state of words
+                        Console.WriteLine("Current words state:");
+                        foreach (var word in scripture.Words)
                         {
-                            quit = true; // exit if user types quit
-                            break;
+                            Console.WriteLine(word.ToString()); // This will show hidden or visible words
                         }
 
+                        if (wordsLeft == 0) // Check if no words are left
+                        {
+                            Console.Clear(); // Clear the console before showing the congratulations message
+                            Console.WriteLine("\nCongratulations! All words are hidden!"); // Display message
+                            scriptureComplete = true; // Mark scripture as complete
+                        }
+                    }
+                }
+
+                if (scriptureComplete)
+                {
+                    while (true)
+                    {
+                        Console.WriteLine("\nDo you want another scripture to memorize? (yes/no)");
+                        string response = Console.ReadLine();
+                        if (response?.ToLower() == "yes")
+                        {
+                            break; // Get a new scripture
+                        }
+                        else if (response?.ToLower() == "no")
+                        {
+                            quit = true; // Exit the main loop
+                            break; // Exit the confirmation loop
+                        }
                         else
                         {
-                            scripture.HideRandomWord(random); // attempt to hide a random word
-                            if(scripture.AllWordsHidden())  // check if all words are now hidden
-                            {
-                                scriptureComplete = true; //mark scripture as complete
-                                Console.WriteLine("\n Congratulations.");
-                                Console.WriteLine("\n Press enter to continue or type 'quit' to exit.");
-                                input = Console.ReadLine();
-                                if(input?.ToLower() == "quit") 
-
-                            {
-                                quit = true; // exit if user chooses to quit
-                            }
+                            Console.WriteLine("Please enter 'yes' or 'no'.");
                         }
-                    }      
+                    }
                 }
             }
         }
+
+        private static void LoadScripturesFromFile(string filePath)
+        {
+            Console.WriteLine($"Checking for file: {filePath}");
+            Console.WriteLine($"Current Directory: {Directory.GetCurrentDirectory()}");
+
+            if (File.Exists(filePath))
+            {
+                Console.WriteLine("File found. Reading lines...");
+                try
+                {
+                    var lines = File.ReadAllLines(filePath);
+                    Console.WriteLine($"Number of lines read: {lines.Length}");
+
+                    foreach (var line in lines)
+                    {
+                        var parts = line.Split('|');
+                        if (parts.Length == 2)
+                        {
+                            var reference = new ScriptureReference(parts[0]);
+                            var text = parts[1];
+                            _scriptures.Add(new Scripture(reference, text));
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Invalid line format: {line}");
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error reading file: {ex.Message}");
+                }
+            }
+            else
+            {
+                Console.WriteLine($"Error: The file {filePath} does not exist.");
+            }
+        }
+
         private static Scripture GetRandomScripture(Random random)
         {
-            //Random random = new Random();
-            return scriptures[random.Next(scriptures.Count)];
+            return _scriptures[random.Next(_scriptures.Count)];
         }
     }
 }
-
