@@ -29,7 +29,7 @@ namespace MindfulnessApp
         {
             for (int i = seconds; i > 0; i--)
             {
-                Console.Write($"\rPausing for {i} seconds...");
+                Console.Write($"\rPausing for {i} seconds...\n");
                 Thread.Sleep(1000);
             }
             Console.WriteLine();
@@ -63,7 +63,7 @@ namespace MindfulnessApp
             StartActivity();
             int breathingTime = _duration;
 
-            Console.WriteLine("Starting breathing exercise...");
+            Console.WriteLine("Starting breathing exercise...\n");
             while (breathingTime > 0)
             {
                 Console.WriteLine("Breathe in...");
