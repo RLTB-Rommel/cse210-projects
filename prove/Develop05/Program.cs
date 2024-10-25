@@ -13,11 +13,11 @@ namespace MindfulnessApp
 
         public void StartActivity()
         {
-            Console.WriteLine($"Welcome to the {_activityName}!");
+            Console.WriteLine($"\nWelcome to the {_activityName}!\n");
             Console.WriteLine(_description);
             Console.Write("Enter the duration in seconds: ");
             _duration = int.Parse(Console.ReadLine());
-            Console.WriteLine("Get ready to begin...");
+            Console.WriteLine("\nGet ready to begin...");
             Pause(3);
         }
         public void EndActivity()
@@ -29,7 +29,7 @@ namespace MindfulnessApp
         {
             for (int i = seconds; i > 0; i--)
             {
-                Console.Write($"\rPausing for{i}seconds...");
+                Console.Write($"\rPausing for {i} seconds...");
                 Thread.Sleep(1000);
             }
             Console.WriteLine();
@@ -39,7 +39,7 @@ namespace MindfulnessApp
             int elapsed = 0;
             while(elapsed < duration)
             {
-                Console.Write("\u231B");
+                Console.Write("\u2318");
                 Thread.Sleep(500);
                 Console.Write("\r  ");
                 Thread.Sleep(500);
@@ -172,11 +172,11 @@ namespace MindfulnessApp
         {
             while (true)
             {
-                Console.WriteLine("Select an activity:");
+                Console.WriteLine("\nSelect an activity:\n");
                 Console.WriteLine("1. Breathing Activity");
                 Console.WriteLine("2. Reflection Activity");
                 Console.WriteLine("3. Listing Activity");
-                Console.WriteLine("4. Exit");
+                Console.WriteLine("4. Exit\n");
                 Console.Write("Choose an option (1-4): ");
 
                 string choice = Console.ReadLine();
