@@ -39,7 +39,7 @@ namespace MindfulnessApp
             int elapsed = 0;
             while(elapsed < duration)
             {
-                Console.Write("\u2318");
+                Console.Write("\u231B");
                 Thread.Sleep(500);
                 Console.Write("\r  ");
                 Thread.Sleep(500);
