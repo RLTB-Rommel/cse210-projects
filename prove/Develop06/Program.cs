@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-//using System.Runtime.CompilerServices;
 using System.Text.Json;
 
 
@@ -17,7 +16,7 @@ public abstract class Goal
         Name = name;
         _achievements = 0;
     }
-    public abstract void RecordAchievement();
+    public abstract void RecordAchievement(GoalTracker tracker);
     public abstract bool IsComplete();
     public abstract string GetGoalStatus();
     public int GetPoints() => _points;
@@ -30,10 +29,12 @@ public class SimpleGoal : Goal
         _points = points;
     }
 
-    public override void RecordAchievement()
+    public override void RecordAchievement(GoalTracker tracker)
     {
-        Console.WriteLine($"You've completed: {Name}");
         _achievements++;
+        tracker.AddScore(_points);       
+        Console.WriteLine($"You've completed: {Name}");
+
     }
     public override bool IsComplete() =>_achievements > 0;
     public override string GetGoalStatus() => IsComplete() ? "[X]" + Name : "[ ]" + Name;
@@ -48,9 +49,10 @@ public class EternalGoal : Goal
         _points = points;
     }
 
-    public override void RecordAchievement()
+    public override void RecordAchievement(GoalTracker tracker)
     {
         _achievements++;
+        tracker.AddScore(_points);
         Console.WriteLine($"You've gained {_points} points for {Name}. Total: {_achievements * _points}");
     }
     public override bool IsComplete() =>false;
@@ -69,16 +71,18 @@ public class ChecklistGoal : Goal
         _bonus = bonus;
     }
 
-    public override void RecordAchievement()
+    public override void RecordAchievement(GoalTracker tracker)
     {
-       if(_achievements<_target)
+       if(_achievements <_target)
        {
             _achievements++;
+            tracker.AddScore(_points);
             Console.WriteLine($"You've gained {_points} points for {Name}. Progress: {_achievements}/{_target}");
        
             if (IsComplete())
             {
-                Console.WriteLine($"Bonus!You've completed {Name}! Bonus Points: 500");
+                Console.WriteLine($"Bonus!You've completed {Name}! Bonus Points: {_bonus}");
+                tracker.AddScore(_bonus);
             }
      
         }
@@ -103,12 +107,16 @@ public class GoalTracker
     {
         _goals.Add(goal);
     }
+        public void AddScore (int points)
+    {
+        TotalScore += points;
+    }
     public void RecordAchievement(string goalName)
     {
         var goal = _goals.Find(g=>g.Name == goalName);
         if (goal !=null)
         {
-            goal.RecordAchievement();
+            goal.RecordAchievement(this);
             TotalScore += goal.GetPoints();
         }
     }
@@ -119,46 +127,54 @@ public class GoalTracker
         {
             Console.WriteLine(goal.GetGoalStatus());
         }
-        Console.WriteLine($"Total Score:{TotalScore}");
+        Console.WriteLine($"\nTotal Score:{TotalScore}");
     }
 
     public void Save(string filePath)
     {
-        
+        try //creativity feature # 1 error handling  in saving the file
+        {
         var json = JsonSerializer.Serialize(this);
         File.WriteAllText(filePath, json);
-
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saving goals: {ex.Message}");
+        }
     }
     public static GoalTracker Load(string filePath)
+       
     {
+        try
+        {
         var json = File.ReadAllText(filePath);
         return JsonSerializer.Deserialize<GoalTracker>(json);
-
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading goals: {ex.Message}");
+            return new GoalTracker(); //return a new tracker  if loading fails
+        }
     }
-}
+}   
 class Program
 {
     static void Main(string []args)
     {
         GoalTracker tracker = new GoalTracker();
     
-        //sample goals
-        //tracker.AddGoal(new SimpleGoal("Run a marathon",1000));
-        //tracker.AddGoal(new EternalGoal("Read scriptures",100));
-        //tracker.AddGoal(new ChecklistGoal("Attend the temple",50,10,100));
-
         bool running = true;
         while (running)
         {
-            Console.WriteLine($"You have {tracker.TotalScore}points.");
+            Console.WriteLine($"\nYou have  {tracker.TotalScore} points.\n");
             Console.WriteLine("Menu Options : ");
-            Console.WriteLine("1. Create New Goals");
+            Console.WriteLine("\n1. Create New Goals");
             Console.WriteLine("2. List Goals");
             Console.WriteLine("3. Save Goals");
             Console.WriteLine("4. Load Goals");
             Console.WriteLine("5. Record Event");
-            Console.WriteLine("6. Quit");            
-            Console.WriteLine("Select a choice from the menu: ");
+            Console.WriteLine("6. Quit\n");            
+            Console.Write("Select a choice from the menu: ");
 
             var choice = Console.ReadLine();
             switch (choice)
@@ -170,13 +186,13 @@ class Program
                     tracker.ShowGoals();
                     break;
                 case "3":
-                    Console.WriteLine("What is the filename for the goal file?");
+                    Console.WriteLine("What is the filename for the goal file? (e.g. exercise.txt) ");
                     string saveFile = Console.ReadLine();
                     tracker.Save(saveFile);
                     Console.WriteLine("Goals saved!");
                     break;
                 case "4":
-                    Console.WriteLine("What is the filename for the goal file?");
+                    Console.WriteLine("What is the filename for the goal file? (e.g. exercise.txt)");
                     string loadFile = Console.ReadLine();
                     tracker = GoalTracker.Load(loadFile);
                     Console.WriteLine("Goals loaded!");
@@ -195,30 +211,78 @@ class Program
     }
     static void CreateNewGoals(GoalTracker tracker)
     {
-        Console.WriteLine("The types of Goals are:");
+        Console.WriteLine("\nThe types of Goals are:\n");
         Console.WriteLine("1. Simple Goal");
         Console.WriteLine("2. Eternal Goal:");
         Console.WriteLine("3. CheckList Goas:");
-        Console.WriteLine("Which type of Goal would you like to create?");
 
-        var type = Console.ReadLine();
-        Console.Write("What is the name of your goal?");
+
+        string type;
+        while (true)
+        {
+            Console.Write("\nWhich type of Goal would you like to create? ");
+            type = Console.ReadLine();
+        
+            if (type == "1" || type == "2" || type == "3")
+            {
+                break; //valid input, will exit the loop
+            }
+            else
+            {
+                Console.WriteLine("Invalid choice. Please enter 1, 2, 3.");
+            }
+        }
+            
+        Console.Write("\nWhat is the name of your goal? ");
         var name = Console.ReadLine();
         Console.Write("Give a short description of it: ");
         var description = Console.ReadLine();
-        Console.Write("What is the amount of points associated with this goal?");
-        int points = int.Parse(Console.ReadLine());
 
+        int points;
+        while (true)
+        {
+
+            Console.Write("What is the amount of points associated with this goal? ");
+            if(int.TryParse(Console.ReadLine(), out points))
+            {
+                break;
+            }
+            else
+            {
+                Console.WriteLine("Invalid input. Please enter a valid integer for points."); // creativity feature #2 shows this message if encoded a value other than a number or integer.
+            }
+        }
+    
         int target = 0;
         int bonus = 0;
 
         if (type == "3")
-        {
-            Console.Write("How many times does this goal need to be accomplished for a bonus?");
-            target = int.Parse(Console.ReadLine());
-            Console.Write("How much is the bonus for accomplishing that many times?");
-            bonus = int.Parse(Console.ReadLine());
-        } 
+
+            while (true)
+            {
+                Console.Write("How many times does this goal need to be accomplished for a bonus?");
+                if(int.TryParse(Console.ReadLine(), out target))
+                {
+                    break; // valid integer, exits the loop
+                }
+                else
+                {
+                    Console.WriteLine("Invalid input. Please enter a valid integer for target.");
+                }
+            }
+            while (true)
+
+            {
+                Console.Write("How much is the bonus for accomplishing that many times? ");
+                if(int.TryParse(Console.ReadLine(), out target))                                
+                {
+                    break;
+                }
+                else
+                {
+                    Console.WriteLine("Invalid input. Please enter a valid integer for target.");
+                }
+            } 
         Goal newGoal;
         switch (type)
         {
